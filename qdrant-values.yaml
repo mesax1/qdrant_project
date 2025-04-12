@@ -1,0 +1,9 @@
+# Create cluster with 2 Qdrant nodes
+replicaCount: 2
+config:
+  cluster:
+    enabled: true
+  # Set default collection replication factor to 2
+  storage:
+    collection:
+      replication_factor: 2
