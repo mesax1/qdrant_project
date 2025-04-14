@@ -11,6 +11,13 @@ logger.info(f"Loading dataset: {config.DATASET_NAME}...")
 dataset = load_dataset(config.DATASET_NAME, config.DATASET_CONFIG, split="corpus")
 logger.info(f"Dataset loaded: {config.DATASET_NAME}")
 
+# Limit dataset size based on config
+if config.MAX_DOCUMENTS is not None and config.MAX_DOCUMENTS < len(dataset):
+    logger.warning(f"Limiting dataset size to {config.MAX_DOCUMENTS} documents.")
+    dataset = dataset.select(range(config.MAX_DOCUMENTS))
+else:
+    logger.info(f"Using full dataset size: {len(dataset)} documents.")
+
 # Dense Embeddings
 logger.info(f"Initializing dense embedding model: {config.DENSE_MODEL_NAME}...")
 dense_embedding_model = TextEmbedding(
@@ -63,41 +70,45 @@ logger.info("Creating Qdrant client...")
 qdrant_client = QdrantClient(url=config.QDRANT_URL, timeout=config.TIMEOUT)
 logger.info(f"Qdrant client created: {config.QDRANT_URL}")
 
-# Create collection
-logger.info("Creating collection...")
-qdrant_client.create_collection(
-    collection_name=config.COLLECTION_NAME,
-    vectors_config={
-        config.DENSE_VECTOR_NAME: models.VectorParams(
-            size=config.DENSE_VECTOR_SIZE,
-            distance=models.Distance.COSINE,
-            quantization_config=models.BinaryQuantization(
-                binary=models.BinaryQuantizationConfig(always_ram=True),
+# Check if collection exists, create if not
+collection_name = config.COLLECTION_NAME
+if qdrant_client.collection_exists(collection_name=collection_name):
+    logger.info(f"Collection '{collection_name}' already exists. Skipping creation.")
+else:
+    logger.info(f"Creating collection: {collection_name}...")
+    qdrant_client.create_collection(
+        collection_name=collection_name,
+        vectors_config={
+            config.DENSE_VECTOR_NAME: models.VectorParams(
+                size=config.DENSE_VECTOR_SIZE,
+                distance=models.Distance.COSINE,
+                quantization_config=models.BinaryQuantization(
+                    binary=models.BinaryQuantizationConfig(always_ram=True),
+                ),
+                hnsw_config=models.HnswConfigDiff(
+                    m=0,  # Defer HNSW construction, to store vectors and index them later after upload of all points
+                ),
             ),
-            hnsw_config=models.HnswConfigDiff(
-                m=0,  # Defer HNSW construction, to store vectors and index them later after upload of all points
+            config.LATE_INTERACTION_VECTOR_NAME: models.VectorParams(
+                size=config.LATE_INTERACTION_VECTOR_SIZE,
+                distance=models.Distance.COSINE,
+                multivector_config=models.MultiVectorConfig(
+                    comparator=models.MultiVectorComparator.MAX_SIM,
+                ),
+                hnsw_config=models.HnswConfigDiff(
+                    m=0,  # Disable HNSW graph creation given that late interaction will only be used for reranking purposes
+                ),
             ),
-        ),
-        config.LATE_INTERACTION_VECTOR_NAME: models.VectorParams(
-            size=config.LATE_INTERACTION_VECTOR_SIZE,
-            distance=models.Distance.COSINE,
-            multivector_config=models.MultiVectorConfig(
-                comparator=models.MultiVectorComparator.MAX_SIM,
+        },
+        sparse_vectors_config={
+            config.SPARSE_VECTOR_NAME: models.SparseVectorParams(
+                modifier=models.Modifier.IDF,
             ),
-            hnsw_config=models.HnswConfigDiff(
-                m=0,  # Disable HNSW graph creation given that late interaction will only be used for reranking purposes
-            ),
-        ),
-    },
-    sparse_vectors_config={
-        config.SPARSE_VECTOR_NAME: models.SparseVectorParams(
-            modifier=models.Modifier.IDF,
-        ),
-    },
-    shard_number=config.SHARD_NUMBER,
-    replication_factor=config.REPLICATION_FACTOR,
-)
-logger.info(f"Collection created: {config.COLLECTION_NAME}")
+        },
+        shard_number=config.SHARD_NUMBER,
+        replication_factor=config.REPLICATION_FACTOR,
+    )
+    logger.info(f"Collection created: {collection_name}")
 
 # Upload data to Qdrant by batches
 logger.info(f"Uploading data to Qdrant by batches of {config.BATCH_SIZE}...")
@@ -162,12 +173,7 @@ logger.info("Re-enabling HNSW construction...")
 qdrant_client.update_collection(
     collection_name=config.COLLECTION_NAME,
     vectors_config={
-        config.DENSE_VECTOR_NAME: models.VectorParams(
-            size=config.DENSE_VECTOR_SIZE,
-            distance=models.Distance.COSINE,
-            quantization_config=models.BinaryQuantization(
-                binary=models.BinaryQuantizationConfig(always_ram=True),
-            ),
+        config.DENSE_VECTOR_NAME: models.VectorParamsDiff(
             hnsw_config=models.HnswConfigDiff(
                 m=16,  # Re-enable HNSW construction after upload of all points
             ),
