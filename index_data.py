@@ -8,7 +8,7 @@ from loguru import logger
 import config
 
 logger.info(f"Loading dataset: {config.DATASET_NAME}...")
-dataset = load_dataset(config.DATASET_NAME, split="corpus")
+dataset = load_dataset(config.DATASET_NAME, config.DATASET_CONFIG, split="corpus")
 logger.info(f"Dataset loaded: {config.DATASET_NAME}")
 
 # Dense Embeddings
@@ -34,8 +34,8 @@ logger.info(f"Sparse embedding model initialized: {config.SPARSE_MODEL_NAME}")
 
 logger.info("Embedding dataset...")
 sparse_embeddings = list(sparse_embedding_model.passage_embed(dataset["text"][0:1]))
-logger.info(f"Sparse embeddings embedded: {len(sparse_embeddings)}")
-logger.info(f"Embedding size of first document: {len(sparse_embeddings[0])}")
+logger.info("Sparse embeddings embedded")
+
 
 # Late Interaction Embeddings
 # logger.info(
@@ -94,6 +94,8 @@ qdrant_client.create_collection(
             modifier=models.Modifier.IDF,
         ),
     },
+    shard_number=config.SHARD_NUMBER,
+    replication_factor=config.REPLICATION_FACTOR,
 )
 logger.info(f"Collection created: {config.COLLECTION_NAME}")
 
