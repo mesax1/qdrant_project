@@ -32,9 +32,9 @@ DENSE_VECTOR_NAME = "dense_vector"
 SPARSE_MODEL_NAME = "Qdrant/bm42-all-minilm-l6-v2-attentions"
 SPARSE_VECTOR_NAME = "sparse_vector"
 
-LATE_INTERACTION_MODEL_NAME = "answerdotai/answerai-colbert-small-v1"
+LATE_INTERACTION_MODEL_NAME = "colbert-ir/colbertv2.0"
 LATE_INTERACTION_VECTOR_SIZE = (
-    96  # 128 for colbertv2.0 and 96 for answerai-colbert-small-v1
+    128  # 128 for colbertv2.0 and 96 for answerai-colbert-small-v1
 )
 LATE_INTERACTION_VECTOR_NAME = "late_interaction_vector"
 
