@@ -85,6 +85,7 @@ else:
                 quantization_config=models.BinaryQuantization(
                     binary=models.BinaryQuantizationConfig(always_ram=True),
                 ),
+                on_disk=True,
                 hnsw_config=models.HnswConfigDiff(
                     m=0,  # Defer HNSW construction, to store vectors and index them later after upload of all points
                 ),
