@@ -17,7 +17,7 @@ TIMEOUT = 500
 # QDRANT_API_KEY = "qdrant-api-key" # Ensure this matches the Helm value if set
 
 # Collection Configuration - These settings now apply to the K8s cluster
-COLLECTION_NAME = "wikipedia_hybrid_bq_k8s"
+COLLECTION_NAME = "beir_nq"
 
 SHARD_NUMBER = 3  # Will be distributed across the 2 nodes
 REPLICATION_FACTOR = 2  # Each shard replica will live on a different node
@@ -25,8 +25,8 @@ REPLICATION_FACTOR = 2  # Each shard replica will live on a different node
 # --- Vector Config, Models, Data Config, Indexing Config, Search Config ---
 
 # Vector Configuration
-DENSE_MODEL_NAME = "BAAI/bge-small-en-v1.5"
-DENSE_VECTOR_SIZE = 384  # 384 for bge-small-en-v1.5
+DENSE_MODEL_NAME = "BAAI/bge-large-en-v1.5"
+DENSE_VECTOR_SIZE = 1024  # 384 for bge-small-en-v1.5 and 1024 for bge-large-en-v1.5
 DENSE_VECTOR_NAME = "dense_vector"
 
 SPARSE_MODEL_NAME = "Qdrant/bm42-all-minilm-l6-v2-attentions"
@@ -60,15 +60,14 @@ VECTOR_PARAMS = {
 PAYLOAD_INDEX_FIELD = "user_id"
 
 # Data Configuration
-DATASET_NAME = "wikipedia"
-DATASET_CONFIG = "20220301.simple"
+DATASET_NAME = "BeIR/nq"
 DATASET_TEXT_FIELD = "text"
 MAX_DOCUMENTS = 100_000  # Keep smaller for faster K8s testing initially
 # TODO: Change to 1_000_000 after testing
 NUM_USERS = 10
 
 # Indexing Configuration
-BATCH_SIZE = 128
+BATCH_SIZE = 5
 UPSERT_WAIT = False
 
 # Search Configuration
