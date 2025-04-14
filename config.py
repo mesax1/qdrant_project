@@ -61,6 +61,7 @@ PAYLOAD_INDEX_FIELD = "user_id"
 
 # Data Configuration
 DATASET_NAME = "BeIR/nq"
+DATASET_CONFIG = "corpus"
 DATASET_TEXT_FIELD = "text"
 MAX_DOCUMENTS = 100_000  # Keep smaller for faster K8s testing initially
 # TODO: Change to 1_000_000 after testing
