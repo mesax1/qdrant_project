@@ -40,7 +40,7 @@ except Exception as e:
     summary="Perform Hybrid Search",
     description="Searches the collection using a combination of dense, sparse, and late-interaction reranking. Optionally filters by user ID. The user_id created by index_data.py is a string of the form 'user_0', 'user_1', etc. from user_0 to user_9.",
 )
-def search_documents(
+async def search_documents(  # Make endpoint async
     query: str = Query(
         ...,  # Ellipsis indicates it's required
         title="Search Query",
@@ -72,7 +72,8 @@ def search_documents(
 
     try:
         logger.info(f"Received search request: query='{query}', user_id='{user_id}'")
-        results = searcher.search(query_text=query, target_user_id=user_id)
+        # Await the async search method
+        results = await searcher.search(query_text=query, target_user_id=user_id)
         # Format results to match the response model
         formatted_results = [
             SearchResult(id=point.id, score=point.score, payload=point.payload)
@@ -92,12 +93,13 @@ def search_documents(
     summary="Health Check",
     description="Returns 'OK' if the service is running.",
 )
-def health_check():
+async def health_check():  # Make endpoint async
     # Could add more checks here, e.g., Qdrant client connectivity
     if searcher and searcher.qdrant_client:
         # Basic check: try getting cluster info
         try:
-            searcher.qdrant_client.get_collections()  # Simple operation to check connection
+            # Await the async client call
+            await searcher.qdrant_client.get_collections()  # Simple operation to check connection
             return {"status": "OK"}
         except Exception as e:
             logger.error(f"Health check failed: Qdrant connection error: {e}")

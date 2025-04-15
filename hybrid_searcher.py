@@ -1,11 +1,12 @@
 import config
-from qdrant_client import QdrantClient, models
+from qdrant_client import AsyncQdrantClient, models
 from fastembed import (
     TextEmbedding,
     SparseTextEmbedding,
     LateInteractionTextEmbedding,
 )
 from loguru import logger
+import asyncio
 
 
 class HybridSearcher:
@@ -14,20 +15,12 @@ class HybridSearcher:
         self.rerank_limit = config.RERANK_LIMIT
         self.prefetch_limit = config.PREFETCH_LIMIT
 
-        # Initialize Client
-        logger.info("Creating Qdrant client...")
-        self.qdrant_client = QdrantClient(url=config.QDRANT_URL, timeout=config.TIMEOUT)
-        logger.info(f"Qdrant client connected: {config.QDRANT_URL}")
-
-        # Check if collection exists
-        if not self.qdrant_client.collection_exists(
-            collection_name=self.collection_name
-        ):
-            logger.error(
-                f"Collection '{self.collection_name}' does not exist. Please run index_data.py first."
-            )
-        else:
-            logger.info(f"Using collection: '{self.collection_name}'")
+        # Initialize Async Client
+        logger.info("Creating Async Qdrant client...")
+        self.qdrant_client = AsyncQdrantClient(
+            url=config.QDRANT_URL, timeout=config.TIMEOUT
+        )
+        logger.info(f"Async Qdrant client configured for: {config.QDRANT_URL}")
 
         # Initialize Models
         logger.info(f"Initializing dense embedding model: {config.DENSE_MODEL_NAME}...")
@@ -52,7 +45,7 @@ class HybridSearcher:
             f"Late interaction embedding model initialized: {config.LATE_INTERACTION_MODEL_NAME}"
         )
 
-    def search(self, query_text: str, target_user_id: str | None = None):
+    async def search(self, query_text: str, target_user_id: str | None = None):
         """
         Performs a hybrid search with dense, sparse, and late interaction reranking.
 
@@ -64,10 +57,16 @@ class HybridSearcher:
             A list of search results (points).
         """
         logger.info(f"Embedding query: '{query_text}'")
-        dense_query_vector = next(self.dense_embedding_model.query_embed(query_text))
-        sparse_query_vector = next(self.sparse_embedding_model.query_embed(query_text))
+        dense_query_vector = next(
+            await asyncio.to_thread(self.dense_embedding_model.query_embed, query_text)
+        )
+        sparse_query_vector = next(
+            await asyncio.to_thread(self.sparse_embedding_model.query_embed, query_text)
+        )
         late_query_vector = next(
-            self.late_interaction_embedding_model.query_embed(query_text)
+            await asyncio.to_thread(
+                self.late_interaction_embedding_model.query_embed, query_text
+            )
         )
 
         # Build filter if target_user_id is provided
@@ -106,7 +105,7 @@ class HybridSearcher:
         log_message += "..."
         logger.info(log_message)
 
-        search_result_reranked = self.qdrant_client.query_points(
+        search_result_reranked = await self.qdrant_client.query_points(
             collection_name=self.collection_name,
             prefetch=prefetch_queries,
             query=late_query_vector,
@@ -125,11 +124,11 @@ class HybridSearcher:
 
 
 # Example usage (optional, for testing)
-if __name__ == "__main__":
+async def main():
     searcher = HybridSearcher(collection_name=config.COLLECTION_NAME)
     query = "What do you know about the lord of the rings?"
     user = "user_5"
-    results = searcher.search(query_text=query, target_user_id=user)
+    results = await searcher.search(query_text=query, target_user_id=user)
 
     if results:
         logger.info(f"Search results for query '{query}' and user '{user}':")
@@ -142,7 +141,7 @@ if __name__ == "__main__":
         logger.info(f"No results found for query '{query}' and user '{user}'.")
 
     # Example without user filter
-    results_all = searcher.search(query_text=query)
+    results_all = await searcher.search(query_text=query)
     if results_all:
         logger.info(f"\nSearch results for query '{query}' (no user filter):")
         for i, point in enumerate(results_all):
@@ -152,3 +151,7 @@ if __name__ == "__main__":
             logger.info(f"Text: {point.payload.get('text', 'N/A')}")
     else:
         logger.info(f"No results found for query '{query}' (no user filter).")
+
+
+if __name__ == "__main__":
+    asyncio.run(main())
