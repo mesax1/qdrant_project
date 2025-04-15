@@ -26,8 +26,6 @@ class HybridSearcher:
             logger.error(
                 f"Collection '{self.collection_name}' does not exist. Please run index_data.py first."
             )
-            # Depending on desired behavior, you might raise an exception here
-            # raise ValueError(f"Collection '{self.collection_name}' does not exist.")
         else:
             logger.info(f"Using collection: '{self.collection_name}'")
 
