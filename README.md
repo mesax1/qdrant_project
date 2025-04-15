@@ -42,7 +42,7 @@ helm install qdrant qdrant/qdrant -f qdrant-values.yaml --namespace default
 
 Then, port forward the Qdrant service to your local machine:
 ```bash
-kubectl port-forward svc/qdrant-service 6333:6333
+kubectl port-forward service/qdrant 6333:6333
 ```
 
 ### Run the project
