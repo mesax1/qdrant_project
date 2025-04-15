@@ -28,6 +28,7 @@ REPLICATION_FACTOR = 2  # Each shard replica will live on a different node
 DENSE_MODEL_NAME = "BAAI/bge-large-en-v1.5"
 DENSE_VECTOR_SIZE = 1024  # 384 for bge-small-en-v1.5 and 1024 for bge-large-en-v1.5
 DENSE_VECTOR_NAME = "dense_vector"
+# I know this is not a recommended model to apply binary quantization to, but at least it has more than 1000 dimensions, and this is just for testing
 
 SPARSE_MODEL_NAME = "Qdrant/bm42-all-minilm-l6-v2-attentions"
 SPARSE_VECTOR_NAME = "sparse_vector"
@@ -38,7 +39,6 @@ LATE_INTERACTION_VECTOR_SIZE = (
 )
 LATE_INTERACTION_VECTOR_NAME = "late_interaction_vector"
 
-RERANKER_MODEL_NAME = "BAAI/bge-reranker-base"
 
 # Binary Quantization for Dense Vectors
 QUANTIZATION_CONFIG = BinaryQuantization(
@@ -63,7 +63,7 @@ PAYLOAD_INDEX_FIELD = "user_id"
 DATASET_NAME = "BeIR/nq"
 DATASET_CONFIG = "corpus"
 DATASET_TEXT_FIELD = "text"
-MAX_DOCUMENTS = 1_000  # Keep smaller for faster K8s testing initially
+MAX_DOCUMENTS = 100  # Keep smaller for faster K8s testing initially
 # TODO: Change to 1_000_000 after testing
 NUM_USERS = 10
 
@@ -72,5 +72,5 @@ BATCH_SIZE = 5
 UPSERT_WAIT = False
 
 # Search Configuration
-SEARCH_LIMIT = 100
+PREFETCH_LIMIT = 50
 RERANK_LIMIT = 10
