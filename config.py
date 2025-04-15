@@ -63,8 +63,9 @@ PAYLOAD_INDEX_FIELD = "user_id"
 DATASET_NAME = "BeIR/nq"
 DATASET_CONFIG = "corpus"
 DATASET_TEXT_FIELD = "text"
-MAX_DOCUMENTS = 100  # Keep smaller for faster K8s testing initially
-# TODO: Change to 1_000_000 after testing
+MAX_DOCUMENTS = (
+    1_000_000  # TODO: Change to higher value if you want to index the entire dataset
+)
 NUM_USERS = 10
 
 # Indexing Configuration
