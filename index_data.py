@@ -45,25 +45,25 @@ logger.info("Sparse embeddings embedded")
 
 
 # Late Interaction Embeddings
-# logger.info(
-#     f"Initializing late interaction embedding model: {config.LATE_INTERACTION_MODEL_NAME}..."
-# )
-# late_interaction_embedding_model = LateInteractionTextEmbedding(
-#     model_name=config.LATE_INTERACTION_MODEL_NAME,
-#     model_type="text",
-# )
-# logger.info(
-#     f"Late interaction embedding model initialized: {config.LATE_INTERACTION_MODEL_NAME}"
-# )
+logger.info(
+    f"Initializing late interaction embedding model: {config.LATE_INTERACTION_MODEL_NAME}..."
+)
+late_interaction_embedding_model = LateInteractionTextEmbedding(
+    model_name=config.LATE_INTERACTION_MODEL_NAME,
+    model_type="text",
+)
+logger.info(
+    f"Late interaction embedding model initialized: {config.LATE_INTERACTION_MODEL_NAME}"
+)
 
-# logger.info("Embedding dataset...")
-# late_interaction_embeddings = list(
-#     late_interaction_embedding_model.passage_embed(dataset["text"][0:1])
-# )
-# logger.info(f"Late interaction embeddings embedded: {len(late_interaction_embeddings)}")
-# logger.info(
-#     f"Embedding size of first document: {len(late_interaction_embeddings[0][0])}"
-# )
+logger.info("Embedding dataset...")
+late_interaction_embeddings = list(
+    late_interaction_embedding_model.passage_embed(dataset["text"][0:1])
+)
+logger.info(f"Late interaction embeddings embedded: {len(late_interaction_embeddings)}")
+logger.info(
+    f"Embedding size of first document: {len(late_interaction_embeddings[0][0])}"
+)
 
 # Create Qdrant client
 logger.info("Creating Qdrant client...")
@@ -125,6 +125,9 @@ for batch in tqdm.tqdm(
 ):
     dense_embeddings = list(dense_embedding_model.passage_embed(batch["text"]))
     sparse_embeddings = list(sparse_embedding_model.passage_embed(batch["text"]))
+    late_interaction_embeddings = list(
+        late_interaction_embedding_model.passage_embed(batch["text"])
+    )
 
     points_to_upload = []
     for i, _ in enumerate(batch["_id"]):
@@ -142,6 +145,9 @@ for batch in tqdm.tqdm(
                 vector={
                     config.DENSE_VECTOR_NAME: dense_embeddings[i].tolist(),
                     config.SPARSE_VECTOR_NAME: sparse_embeddings[i].as_object(),
+                    config.LATE_INTERACTION_VECTOR_NAME: late_interaction_embeddings[
+                        i
+                    ].tolist(),
                 },
                 payload={
                     "_id": batch["_id"][i],
