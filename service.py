@@ -1,4 +1,4 @@
-from fastapi import FastAPI, HTTPException
+from fastapi import FastAPI, HTTPException, Query
 from pydantic import BaseModel  # For potential request/response models
 from typing import List, Optional, Dict, Any
 import uvicorn
@@ -38,9 +38,20 @@ except Exception as e:
     "/api/search",
     response_model=SearchResponse,
     summary="Perform Hybrid Search",
-    description="Searches the collection using a combination of dense, sparse, and late-interaction reranking. Optionally filters by user ID.",
+    description="Searches the collection using a combination of dense, sparse, and late-interaction reranking. Optionally filters by user ID. The user_id created by index_data.py is a string of the form 'user_0', 'user_1', etc. from user_0 to user_9.",
 )
-def search_documents(query: str, user_id: Optional[str] = None):
+def search_documents(
+    query: str = Query(
+        ...,  # Ellipsis indicates it's required
+        title="Search Query",
+        description="The text query to search for.",
+    ),
+    user_id: Optional[str] = Query(
+        None,  # Default value is None
+        title="User ID Filter",
+        description="Optional user ID to filter results for a specific user. The user_id created by index_data.py is a string of the form 'user_0', 'user_1', etc. from user_0 to user_9.",
+    ),
+):
     """
     Search endpoint.
 
