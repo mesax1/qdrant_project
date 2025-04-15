@@ -52,9 +52,19 @@ Run the following command to index the data:
 python index_data.py
 ```
 
-Then, run the following command to perform hybrid search:
+Then, run the following command to activate the FastAPI server for hybrid search:
 ```bash
-python hybrid_search.py
+python service.py
 ```
 
+Access the API docs at:
+```bash
+http://localhost:8000/docs
+```
+
+Another alternative to just run a hybrid search is to use the `hybrid_searcher.py` file to execute a hybrid search example directly.
+
+```bash
+python hybrid_searcher.py
+```
 
